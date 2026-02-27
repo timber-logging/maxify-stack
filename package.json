@@ -1,0 +1,22 @@
+{
+  "name": "maxify-stack",
+  "version": "1.0.0",
+  "description": "A local utility to convert minified stack traces into readable format using source maps",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["sourcemap", "stack-trace", "debugging", "minified", "unminify"],
+  "homepage": "https://www.timber-logging.co",
+  "author": "Peripat Pty Ltd",
+  "license": "MIT",
+  "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timber-logging/maxify-stack.git"
+  },
+  "dependencies": {
+    "@timber-logging/maxify-stack-utils": "^1.0.1",
+    "express": "^5.2.1"
+  }
+}
