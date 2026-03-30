@@ -24,6 +24,11 @@ app.get('/config', (req, res) => {
 app.post('/go', async (req, res) => {
     try {
       const { folder, input } = req.body;
+
+      let folderPath = folder;
+      if (folderPath === 'ALL') {
+        folderPath = JSON.parse(fs.readFileSync('./folder-paths.json', 'utf8'));
+      }
       const output = await maxifyStack(folder, input);
       // console.log(output)
       res.json(output);

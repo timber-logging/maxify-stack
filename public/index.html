@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Maxify Stack</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
 <style>
 body { font-family: sans-serif; max-width: 1000px; margin: 20px auto; padding: 0 20px; line-height: 1.5; color: #333; }
 
@@ -70,97 +71,103 @@ font-family: monospace;
 <div id="results-list" style="margin-top: 30px;"></div>
 
 <script>
+
 // Load radio buttons on start
 fetch('/config').then(r => r.json()).then(paths => {
-const container = document.getElementById('radio-container');
-if (!paths || paths.length === 0) {
-container.innerHTML = '<p class="error-text">Yeah nah: folder-paths.json must be populated with an array of strings which are the full folder paths to the build folder for the source maps.</p>';
-return;
-}
+  const container = document.getElementById('radio-container');
+  if (!paths || paths.length === 0) {
+    container.innerHTML = '<p class="error-text">Yeah nah: folder-paths.json must be populated with an array of strings which are the full folder paths to the build folder for the source maps.</p>';
+    return;
+  }
 
-// Map through paths and check if we should auto-select the first one
-container.innerHTML = paths.map((p, index) => {
-// If there's only one item, add the 'checked' attribute
-const isChecked = paths.length === 1 ? 'checked' : '';
+  // create an all option
+  container.innerHTML = `<label style="display:block; margin-bottom: 5px;">
+    <input type="radio" name="path" value="ALL" checked> ALL
+    </label>
+    `;
 
-return `
-<label style="display:block; margin-bottom: 5px;">
-<input type="radio" name="path" value="${p}" ${isChecked}> ${p}
-</label>
-`;
-}).join('');
+  // Map through paths and check if we should auto-select the first one
+  container.innerHTML += paths.map((p, index) => {
+    return `
+    <label style="display:block; margin-bottom: 5px;">
+    <input type="radio" name="path" value="${p}"> ${p}
+    </label>
+    `;
+  }).join('');
 });
 
 document.getElementById('goBtn').onclick = async () => {
-const selected = document.querySelector('input[name="path"]:checked');
-const inputVal = document.getElementById('mainInput').value;
+  const selected = document.querySelector('input[name="path"]:checked');
+  const inputVal = document.getElementById('mainInput').value;
 
-if (!selected) return alert("Select a folder path!");
+  if (!selected) return alert("Select a folder path!");
 
-const res = await fetch('/go', {
-method: 'POST',
-headers: {'Content-Type': 'application/json'},
-body: JSON.stringify({ folder: selected.value, input: inputVal })
-});
+  let folder = selected.value;
 
-const data = await res.json();
-addResultToTop(data, selected.value, inputVal);
+  const res = await fetch('/go', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ folder, input: inputVal })
+  });
 
-// Clear input only if there was a result (per your requirement)
-if (data.result) document.getElementById('mainInput').value = '';
+  const data = await res.json();
+  addResultToTop(data, selected.value, inputVal);
+
+  // Clear input only if there was a result (per your requirement)
+  if (data.result) document.getElementById('mainInput').value = '';
 };
 
 document.getElementById('replaceNewlineBtn').onclick = () => {
-const textarea = document.getElementById('mainInput');
-const currentValue = textarea.value;
-const updatedValue = currentValue.replace(/\\n/g, '\n');
-textarea.value = updatedValue;
+  const textarea = document.getElementById('mainInput');
+  const currentValue = textarea.value;
+  const updatedValue = currentValue.replace(/\\n/g, '\n');
+  textarea.value = updatedValue;
 };
 
 function addResultToTop(data, path, input) {
-const container = document.getElementById('results-list');
-const div = document.createElement('div');
-div.className = 'entry';
+  const container = document.getElementById('results-list');
+  const div = document.createElement('div');
+  div.className = 'entry';
 
-// Generate hh:mm:ss timestamp
-const now = new Date();
-const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
-now.getMinutes().toString().padStart(2, '0') + ':' +
-now.getSeconds().toString().padStart(2, '0');
+  // Generate hh:mm:ss timestamp
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+  now.getMinutes().toString().padStart(2, '0') + ':' +
+  now.getSeconds().toString().padStart(2, '0');
 
-const headingText = data.error && !data.result ? 'Error' : 'Result';
-const statusClass = data.error && !data.result ? 'error-text' : '';
+  const headingText = data.error && !data.result ? 'Error' : 'Result';
+  const statusClass = data.error && !data.result ? 'error-text' : '';
 
-// Header row with Heading (left) and Time (right)
-let html = `
-<div class="header-row">
-<h3 class="${statusClass}">${headingText}</h3>
-<span class="timestamp">Run at ${timeStr}</span>
-</div>
-`;
+  // Header row with Heading (left) and Time (right)
+  let html = `
+  <div class="header-row">
+  <h3 class="${statusClass}">${headingText}</h3>
+  <span class="timestamp">Run at ${timeStr}</span>
+  </div>
+  `;
 
-if (data.result) {
-html += `<div class="result-section">${data.result}</div>`;
-}
+  if (data.result) {
+    html += `<div class="result-section">${data.result}</div>`;
+  }
 
-if (data.error) {
-html += `
-<span class="label-heading">Errors</span>
-<div class="error-text">${data.error}</div>
-`;
-}
+  if (data.error) {
+    html += `
+    <span class="label-heading">Errors</span>
+    <div class="error-text">${data.error}</div>
+    `;
+  }
 
-html += `
-<div class="input-log">
-<details>
-<summary>Input</summary>
-<div class="input-details"><strong>Selected Path:</strong> ${path}\n\n${input}</div>
-</details>
-</div>
-`;
+  html += `
+    <div class="input-log">
+    <details>
+    <summary>Input</summary>
+    <div class="input-details"><strong>Selected Path:</strong> ${path}\n\n${input}</div>
+    </details>
+    </div>
+  `;
 
-div.innerHTML = html;
-container.prepend(div);
+  div.innerHTML = html;
+  container.prepend(div);
 }
 </script>
 
